@@ -422,6 +422,7 @@ def download_chapters(jsonpath: str) -> None:
 
     chapters = data['data']
     log.info(f"Downloading {len(chapters)} Chapters... this may take a while.")
+    folders = Prompt.ask("Do you want the images seperated? [y/n]", choices=["y", "n"])
     for chapter in chapters:
         chapter_id = chapter['id']
         attributes = chapter['attributes']
@@ -436,7 +437,6 @@ def download_chapters(jsonpath: str) -> None:
             "Authorization": f"Bearer {os.environ['access_token']}",
             "User-Agent": "MangaDex-Downloader/v1.0.0dev @lkse"
         }
-
         try:
             log.debug("Sending Chapter GET...")
             response = requests.get(url, headers=headers)
@@ -467,9 +467,31 @@ def download_chapters(jsonpath: str) -> None:
                 
                 if response.status_code == 200 and "image/" in response.headers["Content-Type"]:
                     try:
-                        os.makedirs(f"./Downloads/{manga_id}/Volume {volume_number}/Chapter {chapter_number} ({chapter_title})", exist_ok=True)
-                        with open(f"./Downloads/{manga_id}/Volume {volume_number}/Chapter {chapter_number} ({chapter_title})/{page_number+1}.png", 'wb') as f:
-                            f.write(response.content)
+                        # strip the title of any illegal characters
+                        if chapter_title:
+                            chapter_title = chapter_title.replace('/', '')
+                            chapter_title = chapter_title.replace('\\', '')
+                            chapter_title = chapter_title.replace(':', '')
+                            chapter_title = chapter_title.replace('*', '')
+                            chapter_title = chapter_title.replace('?', '')
+                            chapter_title = chapter_title.replace('"', '')
+                            chapter_title = chapter_title.replace('<', '')
+                            chapter_title = chapter_title.replace('>', '')
+                            chapter_title = chapter_title.replace('|', '')
+                            chapter_title = chapter_title.replace('.', '')
+                        if chapter_number:
+                            chapter_number = chapter_number.replace('.', '_')
+                        if volume_number:
+                            volume_number = volume_number.replace('.', '_')
+
+                        if folders == "n":
+                            os.makedirs(f"./Downloads/{manga_id}/Volume {volume_number}/Chapter {chapter_number} ({chapter_title})", exist_ok=True)
+                            with open(f"./Downloads/{manga_id}/Volume {volume_number}/Chapter {chapter_number} ({chapter_title})/{page_number+1}.png", 'wb') as f:
+                                f.write(response.content)
+                        if folders == "y":
+                            os.makedirs(f"./Downloads/{manga_id}/", exist_ok=True)
+                            with open(f"./Downloads/{manga_id}/{volume_number}-{chapter_number}-{page_number+1}.png", 'wb') as f:
+                                f.write(response.content)
                     except Exception:
                         log.exception("An Error Occurred While Writing Image.")
                         return 0
@@ -495,5 +517,5 @@ if __name__ == "__main__":
         a = auth()
         if a:
             id = Prompt.ask("Enter the [italic gold3]MangaDex[/italic gold3] [blink bold italic chartreuse1]Manga ID: [/blink bold italic chartreuse1]")
-            fetch_manga(id)
+            #fetch_manga(id)
             download_chapters(f'./data/{id}.json')
