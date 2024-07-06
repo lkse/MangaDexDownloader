@@ -465,7 +465,7 @@ def download_chapters(jsonpath: str) -> None:
                     log.exception("An Error Occurred While Fetching Image.")
                     return 0
                 
-                if response.status_code == 200 and response.headers['Content-Type'] == 'image/png' or response.headers['Content-Type'] == 'image/jpeg':
+                if response.status_code == 200 and "image/" in response.headers["Content-Type"]:
                     try:
                         os.makedirs(f"./Downloads/{manga_id}/Volume {volume_number}/Chapter {chapter_number} ({chapter_title})", exist_ok=True)
                         with open(f"./Downloads/{manga_id}/Volume {volume_number}/Chapter {chapter_number} ({chapter_title})/{page_number+1}.png", 'wb') as f:
@@ -481,11 +481,10 @@ def download_chapters(jsonpath: str) -> None:
                 
                 if response.status_code != 200:
                     log.error(f"An Error Occurred While Fetching Image. Status Code: [bold cyan]{response.status_code}[/bold cyan]", extra={"markup": True})
-                    log.error(response)
-                if response.status_code == 200 and response.headers['Content-Type'] != 'image/png' and response.headers['Content-Type'] != 'image/jpeg':
+                    log.error(response.content)
+                if response.status_code == 200 and "image/" not in response.headers["Content-Type"]:
                     log.error(f"An Error Occurred While Fetching Image. Content-Type: [bold cyan]{response.headers['Content-Type']}[/bold cyan]", extra={"markup": True})
-                    log.error(response)
-
+                    log.error(response.content)
 
 
 if __name__ == "__main__":
@@ -498,9 +497,3 @@ if __name__ == "__main__":
             id = Prompt.ask("Enter the [italic gold3]MangaDex[/italic gold3] [blink bold italic chartreuse1]Manga ID: [/blink bold italic chartreuse1]")
             fetch_manga(id)
             download_chapters(f'./data/{id}.json')
-
-
-
-            
-
-
