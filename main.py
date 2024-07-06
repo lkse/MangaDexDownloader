@@ -465,7 +465,7 @@ def download_chapters(jsonpath: str) -> None:
                     log.exception("An Error Occurred While Fetching Image.")
                     return 0
                 
-                if response.status_code == 200 and response.headers['Content-Type'] == 'image/png':
+                if response.status_code == 200 and response.headers['Content-Type'] == 'image/png' or response.headers['Content-Type'] == 'image/jpeg':
                     try:
                         os.makedirs(f"./Downloads/{manga_id}/Volume {volume_number}/Chapter {chapter_number} ({chapter_title})", exist_ok=True)
                         with open(f"./Downloads/{manga_id}/Volume {volume_number}/Chapter {chapter_number} ({chapter_title})/{page_number+1}.png", 'wb') as f:
@@ -482,7 +482,7 @@ def download_chapters(jsonpath: str) -> None:
                 if response.status_code != 200:
                     log.error(f"An Error Occurred While Fetching Image. Status Code: [bold cyan]{response.status_code}[/bold cyan]", extra={"markup": True})
                     log.error(response)
-                if response.status_code == 200 and response.headers['Content-Type'] != 'image/png':
+                if response.status_code == 200 and response.headers['Content-Type'] != 'image/png' and response.headers['Content-Type'] != 'image/jpeg':
                     log.error(f"An Error Occurred While Fetching Image. Content-Type: [bold cyan]{response.headers['Content-Type']}[/bold cyan]", extra={"markup": True})
                     log.error(response)
 
