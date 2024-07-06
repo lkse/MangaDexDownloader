@@ -453,7 +453,7 @@ def download_chapters(jsonpath: str) -> None:
 
             for page_number, image in enumerate(images):
                 log.info(f"Downloading Page {page_number+1}/{pages_count}...")
-                image_url = f"{base_url}/{hash}/{image}"
+                image_url = f"{base_url}/data/{hash}/{image}"
                 headers = {
                     "User-Agent": "MangaDex-Downloader/v1.0.0dev @lkse"
                 }
