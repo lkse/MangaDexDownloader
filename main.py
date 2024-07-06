@@ -517,5 +517,5 @@ if __name__ == "__main__":
         a = auth()
         if a:
             id = Prompt.ask("Enter the [italic gold3]MangaDex[/italic gold3] [blink bold italic chartreuse1]Manga ID: [/blink bold italic chartreuse1]")
-            #fetch_manga(id)
+            fetch_manga(id)
             download_chapters(f'./data/{id}.json')
