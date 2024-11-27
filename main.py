@@ -17,16 +17,17 @@ from rich.console import Console
 from rich.logging import RichHandler
 from rich.prompt import Prompt
 from time import sleep
+from typing import List, Optional, Dict, Union
 # Setting Up Logging, Console, and global variables
 pretty.install()
 console = Console()
 logging.basicConfig(
-    level="INFO",
+    level="DEBUG",
     format="%(message)s",
     datefmt="[%X]",
     handlers=[RichHandler(rich_tracebacks=True)]
 )
-log = logging.getLogger("rich")
+log = logging.getLogger("INFO")
 expires_at = None
 refresh_expires_at = None
 cls = lambda: os.system("cls")
@@ -170,18 +171,20 @@ def init()-> bool:
             log.debug("No Encrypted Credentials Found.")
             username = Prompt.ask("Enter your [italic gold3]MangaDex[/italic gold3] [blink bold italic chartreuse1]Username: [/blink bold italic chartreuse1]")
             os.environ["username"] = username
-            password = Prompt.ask("Enter your [italic gold3]MangaDex[/italic gold3] [blink bold italic chartreuse1]Password: [/blink bold italic chartreuse1]")
+            password = Prompt.ask("Enter your [italic gold3]MangaDex[/italic gold3] [blink bold italic chartreuse1]Password: [/blink bold italic chartreuse1]", password=True)
             os.environ["password"] = password
             client_id = Prompt.ask("Enter your [italic gold3]Personal API[/italic gold3] [blink bold italic chartreuse1]Client ID: [/blink bold italic chartreuse1]")
             os.environ["client_id"] = client_id
-            client_secret = Prompt.ask("Enter your [italic gold3]Personal API[/italic gold3] [blink bold italic chartreuse1]Client Secret: [/blink bold italic chartreuse1]")
+            client_secret = Prompt.ask("Enter your [italic gold3]Personal API[/italic gold3] [blink bold italic chartreuse1]Client Secret: [/blink bold italic chartreuse1]", password=True)
             os.environ["client_secret"] = client_secret
             env_create(username, password, client_id, client_secret)
 
         else:
             log.debug("Encrypted Credentials Found.")
-            password = Prompt.ask("\nEnter your [italic gold3]MangaDex[/italic gold3] [blink bold italic chartreuse1]Password: [/blink bold italic chartreuse1]")
-            read_env(password)
+            password = Prompt.ask("\nEnter your [italic gold3]MangaDex[/italic gold3] [blink bold italic chartreuse1]Password: [/blink bold italic chartreuse1]", password=True)
+            if not read_env(password):
+                return 0
+            
     except Exception:
         log.exception("An Error Occurred While Initializing the Environment.")
         return 0
@@ -309,7 +312,7 @@ def refresh():
     status.stop() 
     return 1
 
-def fetch_manga(id) -> None:
+def fetch_manga(id: str) -> None:
     """
     Fetches the Manga Details from the MangaDex API.
 
@@ -391,7 +394,6 @@ def fetch_manga(id) -> None:
                 continue
         
         log.info("All Chapters Successfully Fetched.")
-
 
     else:
         log.error(f"An Error Occurred While Fetching Manga Details. Status Code: [bold cyan]{response.status_code}[/bold cyan]", extra={"markup": True})
@@ -507,15 +509,44 @@ def download_chapters(jsonpath: str) -> None:
                 if response.status_code == 200 and "image/" not in response.headers["Content-Type"]:
                     log.error(f"An Error Occurred While Fetching Image. Content-Type: [bold cyan]{response.headers['Content-Type']}[/bold cyan]", extra={"markup": True})
                     log.error(response.content)
+                
+                if response.status_code == 403:
+                    log.error(f"The Client has been [bold red]Temporarily Banned.[/bold red] Report this to the Developer. The program will now quit.", extra={"markup": True})
+                    raise SystemExit(403)
 
+def search():
+    pass
+
+def prompt():
+    """
+    The Main Prompt Function. not really used if you're scripting with this.
+    """
+    while True:
+        choice = Prompt.ask("What would you like to do?", choices=["ID Download","Quit"])
+        if choice == "ID Download":
+            id = Prompt.ask("Enter the Manga ID: ")
+            fetch_manga(id)
+            download_chapters(f"./data/{id}.json")
+
+        if choice == "Search":
+            pass
+        
+        if choice == "Quit":
+            console.print("bye bye")
+            raise SystemExit(0)
 
 if __name__ == "__main__":
     cls()
     console.rule("MangaDex Downloader v1.0.0 By @lkse",)
-    i = init()
-    if i:
-        a = auth()
-        if a:
-            id = Prompt.ask("Enter the [italic gold3]MangaDex[/italic gold3] [blink bold italic chartreuse1]Manga ID: [/blink bold italic chartreuse1]")
-            fetch_manga(id)
-            download_chapters(f'./data/{id}.json')
+    try:
+        if init():
+            if auth():
+                console.clear()
+                prompt()
+    except Exception:
+        log.exception("An Error Occurred.")
+        raise SystemExit(4843)
+    
+    except KeyboardInterrupt:
+        log.error("^C!.")
+        raise SystemExit(0)
